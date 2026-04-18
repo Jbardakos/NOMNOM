@@ -1,0 +1,69 @@
+name: Build macOS App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build app
+        run: |
+          pyinstaller \
+            --windowed \
+            --onedir \
+            --name YTDL \
+            --add-data "ui:ui" \
+            app.py
+
+      - name: Zip app
+        run: |
+          cd dist
+          zip -r NOMNOM.app.zip YTDL.app
+          echo "Build size: $(du -sh NOMNOM.app.zip | cut -f1)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOMNOM-macOS
+          path: dist/NOMNOM.app.zip
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/NOMNOM.app.zip
+          body: |
+            ## NOMNOM ${{ github.ref_name }}
+
+            YouTube bulk downloader — paste anything, download everything.
+
+            ### Install
+            1. Download `NOMNOM.app.zip` below
+            2. Unzip and drag to Applications
+            3. `brew install ffmpeg`
+            4. Open — if blocked: `xattr -dr com.apple.quarantine /Applications/YTDL.app`
+
+            ### Requirements
+            - macOS 12+
+            - ffmpeg (`brew install ffmpeg`)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
