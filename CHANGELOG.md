@@ -4,6 +4,22 @@ All notable changes are documented here.
 
 ---
 
+## [1.6.0] — 2026-07-04
+
+### Added
+- **ffmpeg bundled inside the app** (via `imageio-ffmpeg`) — no `brew install ffmpeg`, no external dependencies at all
+- **Windows build** (`NOMNOM-windows.zip`) alongside macOS
+- **Both Mac architectures**: separate Apple Silicon and Intel builds
+- Automated versioned releases: pushing a `v*` tag builds all three platforms and publishes them to GitHub Releases
+- Ad-hoc code signing of the macOS bundle in CI
+
+### Changed
+- App renamed `YTDL` → `NOMNOM` everywhere (bundle name, window title, download folder is now `~/Downloads/NOMNOM/`)
+- System ffmpeg on PATH is used as fallback if the bundled one is unavailable
+- Docs rewritten: real release links (placeholders removed), per-platform install tables, right-click → Open guidance for Gatekeeper
+
+---
+
 ## [1.5.0] — 2025
 
 ### Added

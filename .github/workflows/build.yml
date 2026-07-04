@@ -1,4 +1,4 @@
-name: Build macOS App
+name: Build NOMNOM
 
 on:
   push:
@@ -8,7 +8,17 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            label: macos-applesilicon
+          - os: macos-13
+            label: macos-intel
+          - os: windows-latest
+            label: windows
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -24,46 +34,83 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build app
+      - name: Build app (macOS)
+        if: runner.os == 'macOS'
         run: |
           pyinstaller \
             --windowed \
             --onedir \
-            --name YTDL \
+            --name NOMNOM \
             --add-data "ui:ui" \
+            --collect-all imageio_ffmpeg \
             app.py
 
-      - name: Zip app
+      - name: Build app (Windows)
+        if: runner.os == 'Windows'
         run: |
+          pyinstaller --windowed --onedir --name NOMNOM --add-data "ui;ui" --collect-all imageio_ffmpeg app.py
+
+      - name: Ad-hoc sign and zip (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep -s - dist/NOMNOM.app
           cd dist
-          zip -r NOMNOM.app.zip YTDL.app
-          echo "Build size: $(du -sh NOMNOM.app.zip | cut -f1)"
+          ditto -c -k --keepParent NOMNOM.app NOMNOM-${{ matrix.label }}.zip
+          echo "Build size: $(du -sh NOMNOM-${{ matrix.label }}.zip | cut -f1)"
+
+      - name: Zip app (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/NOMNOM -DestinationPath dist/NOMNOM-${{ matrix.label }}.zip
+          Get-Item dist/NOMNOM-${{ matrix.label }}.zip | Select-Object Name, Length
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NOMNOM-macOS
-          path: dist/NOMNOM.app.zip
+          name: NOMNOM-${{ matrix.label }}
+          path: dist/NOMNOM-${{ matrix.label }}.zip
           retention-days: 30
 
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/NOMNOM.app.zip
+          files: artifacts/*.zip
           body: |
             ## NOMNOM ${{ github.ref_name }}
 
-            YouTube bulk downloader — paste anything, download everything.
+            Bulk video downloader — paste anything, download everything.
+            **ffmpeg is now bundled inside the app. No Homebrew, no terminal, no extra installs.**
 
-            ### Install
-            1. Download `NOMNOM.app.zip` below
-            2. Unzip and drag to Applications
-            3. `brew install ffmpeg`
-            4. Open — if blocked: `xattr -dr com.apple.quarantine /Applications/YTDL.app`
+            ### Which file do I download?
+            | Your machine | File |
+            |---|---|
+            | Mac with Apple Silicon (M1/M2/M3/M4) | `NOMNOM-macos-applesilicon.zip` |
+            | Mac with Intel CPU | `NOMNOM-macos-intel.zip` |
+            | Windows 10/11 | `NOMNOM-windows.zip` |
 
-            ### Requirements
-            - macOS 12+
-            - ffmpeg (`brew install ffmpeg`)
+            ### macOS install
+            1. Download, unzip, drag `NOMNOM.app` to Applications
+            2. First launch: **right-click the app → Open → Open** (needed once because the app is not notarized)
+            3. If macOS still blocks it, run in Terminal:
+               `xattr -dr com.apple.quarantine /Applications/NOMNOM.app`
+
+            ### Windows install
+            1. Download and unzip
+            2. Open the `NOMNOM` folder and run `NOMNOM.exe`
+            3. If SmartScreen warns: **More info → Run anyway** (the app is unsigned)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

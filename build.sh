@@ -13,12 +13,13 @@ echo "Building app"
 pyinstaller \
   --windowed \
   --onedir \
-  --name YTDL \
+  --name NOMNOM \
   --add-data "ui:ui" \
+  --collect-all imageio_ffmpeg \
   app.py
 
 echo ""
 echo "DONE"
-echo "Open: dist/YTDL.app"
+echo "Open: dist/NOMNOM.app"
 echo "If blocked by macOS:"
-echo "xattr -dr com.apple.quarantine dist/YTDL.app"
+echo "xattr -dr com.apple.quarantine dist/NOMNOM.app"

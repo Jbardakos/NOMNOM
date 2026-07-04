@@ -10,13 +10,24 @@ import yt_dlp
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 UI_FILE = BASE_DIR / "ui" / "index.html"
 
+def find_ffmpeg():
+    """Bundled ffmpeg (imageio-ffmpeg wheel), falling back to system PATH."""
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        import shutil
+        return shutil.which("ffmpeg")
+
+FFMPEG_PATH = find_ffmpeg()
+
 class Backend(QObject):
     folderChanged = Signal(str)
     statusChanged = Signal(str)
 
     def __init__(self):
         super().__init__()
-        self.download_dir = Path.home() / "Downloads" / "YTDL"
+        self.download_dir = Path.home() / "Downloads" / "NOMNOM"
 
     def emit_status(self, data):
         self.statusChanged.emit(json.dumps(data, ensure_ascii=False))
@@ -99,6 +110,8 @@ class Backend(QObject):
                     "no_warnings": True,
                     "restrictfilenames": False,
                 }
+                if FFMPEG_PATH:
+                    ydl_opts["ffmpeg_location"] = FFMPEG_PATH
 
                 try:
                     self.emit_status({
@@ -145,7 +158,7 @@ def main():
     backend = Backend()
 
     view = QWebEngineView()
-    view.setWindowTitle("YTDL")
+    view.setWindowTitle("NOMNOM")
     view.resize(980, 760)
 
     channel = QWebChannel()

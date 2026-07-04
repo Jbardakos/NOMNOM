@@ -1,31 +1,38 @@
 # Installation Guide
 
-## Option A — Pre-built app (easiest)
+## Option A — Pre-built app (easiest, nothing else to install)
 
-1. Go to [Releases](https://github.com/yourusername/nomnom/releases)
-2. Download `NOMNOM.app.zip`
-3. Unzip it
-4. Drag `YTDL.app` to your `/Applications` folder
-5. Install ffmpeg:
-   ```bash
-   brew install ffmpeg
-   ```
-6. Double-click `YTDL.app`
+ffmpeg and yt-dlp are bundled inside the app. No Homebrew, no terminal, no dependencies.
 
-> If macOS says "cannot be opened because the developer cannot be verified":
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/YTDL.app
-> ```
+1. Go to [Releases](https://github.com/Jbardakos/NOMNOM/releases)
+2. Download the file for your machine:
+
+   | Your machine | File |
+   |---|---|
+   | Mac, Apple Silicon (M1/M2/M3/M4) | `NOMNOM-macos-applesilicon.zip` |
+   | Mac, Intel | `NOMNOM-macos-intel.zip` |
+   | Windows 10/11 | `NOMNOM-windows.zip` |
+
+3. **macOS:** unzip, drag `NOMNOM.app` to `/Applications`, then on first launch **right-click → Open → Open** (needed once — the app is not notarized).
+
+   > If macOS still says "cannot be opened because the developer cannot be verified":
+   > ```bash
+   > xattr -dr com.apple.quarantine /Applications/NOMNOM.app
+   > ```
+
+4. **Windows:** unzip, open the `NOMNOM` folder, double-click `NOMNOM.exe`.
+
+   > If SmartScreen warns, click **More info → Run anyway** (the app is unsigned).
 
 ---
 
-## Option B — Build from source
+## Option B — Build from source (macOS)
 
 ### 1. Get the code
 
 ```bash
-git clone https://github.com/yourusername/nomnom.git
-cd nomnom
+git clone https://github.com/Jbardakos/NOMNOM.git
+cd NOMNOM
 ```
 
 ### 2. Install system dependencies
@@ -34,8 +41,8 @@ cd nomnom
 # Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Python 3.10+ and ffmpeg
-brew install python ffmpeg
+# Python 3.10+
+brew install python
 ```
 
 ### 3. Build
@@ -48,25 +55,13 @@ chmod +x build.sh
 This will:
 - Create `venv/` with all Python dependencies (~350MB first time)
 - Run PyInstaller
-- Output `dist/YTDL.app`
+- Output `dist/NOMNOM.app` with ffmpeg bundled inside
 
 ### 4. Run
 
 ```bash
-open dist/YTDL.app
+open dist/NOMNOM.app
 ```
-
----
-
-## Verify ffmpeg
-
-```bash
-ffmpeg -version
-```
-
-If not found: `brew install ffmpeg`
-
-ffmpeg is the **only** external dependency. Everything else (Python, PySide6, yt-dlp) is bundled inside the `.app`.
 
 ---
 
@@ -74,7 +69,7 @@ ffmpeg is the **only** external dependency. Everything else (Python, PySide6, yt
 
 YouTube changes its internals frequently. If downloads stop working:
 
-**Pre-built app:** rebuild from source with latest yt-dlp.
+**Pre-built app:** download the newest release — each release is built with the latest yt-dlp.
 
 **From source:**
 ```bash
@@ -88,8 +83,11 @@ pip install -U yt-dlp
 
 ## Uninstall
 
+**macOS:**
 ```bash
-rm -rf /Applications/YTDL.app
+rm -rf /Applications/NOMNOM.app
 ```
 
-Downloads remain in `~/Downloads/YTDL_*/` — delete manually if needed.
+**Windows:** delete the `NOMNOM` folder.
+
+Downloads remain in `~/Downloads/NOMNOM/` — delete manually if needed.
